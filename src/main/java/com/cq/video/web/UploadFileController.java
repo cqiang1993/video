@@ -1,6 +1,6 @@
 package com.cq.video.web;
 
-import com.cq.video.Repository.IVideoInfoRepository;
+import com.cq.video.repository.IVideoInfoRepository;
 import com.cq.video.entity.VideoInfo;
 import com.cq.video.utils.FileCodecsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/file")
@@ -33,8 +34,8 @@ public class UploadFileController {
         for(String sub : fileSub)
             System.out.println(sub);
         System.out.println(filename);
-        String basePath = "videos\\";
-        String filePath = basePath+"temp\\"+filename;
+        String basePath = "videos/";
+        String filePath = basePath+"temp/"+filename;
         File saveFile = new File(filePath);
         if (!saveFile.getParentFile().exists()) {
             saveFile.getParentFile().mkdirs();
@@ -44,10 +45,11 @@ public class UploadFileController {
             out.write(file.getBytes());
             out.flush();
             out.close();
-            String ffmpegPath = "D:\\ffmpeg\\bin\\ffmpeg.exe";
-            String codcFilePath = basePath + "test.flv";
+            UUID uuid = UUID.randomUUID();
+            String ffmpegPath = "D:/ffmpeg/bin/ffmpeg.exe";
+            String codcFilePath = basePath + uuid+".flv";
             System.out.println(codcFilePath);
-            String picturePath = basePath + "pictures\\test.jpg";
+            String picturePath = basePath + "pictures/"+uuid+".jpg";
             videoInfo.setTitle(title);
             videoInfo.setDescript(descript);
             videoInfo.setSrc(codcFilePath);
@@ -55,9 +57,7 @@ public class UploadFileController {
             videoInfo.setUpdateTime(sdf.format(new Date()));
             flag = FileCodecsUtil.executeCodecs(ffmpegPath,filePath,codcFilePath,picturePath);
             videoInfoRepository.insertVideoInfo(videoInfo.getTitle(),videoInfo.getSrc(),videoInfo.getPicture(),videoInfo.getDescript(),videoInfo.getUpdateTime());
-        }catch (FileNotFoundException e){
-            e.printStackTrace();
-        } catch (IOException e) {
+        }catch (IOException e) {
             e.printStackTrace();
         }
         if(flag){

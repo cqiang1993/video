@@ -39,7 +39,7 @@ public class FileCodecsUtil {
         cutpic.add("-t"); // 添加参数＂-t＂，该参数指定持续时间
         cutpic.add("0.001"); // 添加持续时间为1毫秒
         cutpic.add("-s"); // 添加参数＂-s＂，该参数指定截取的图片大小
-        cutpic.add("800*280"); // 添加截取的图片大小为350*240
+        cutpic.add("350*240"); // 添加截取的图片大小为350*240
         cutpic.add(mediaPicPath); // 添加截取的图片的保存路径
 
         boolean mark = true;
