@@ -1,9 +1,12 @@
 package com.cq.video.web;
 
+import com.cq.video.entity.RespData.RespListSuccess;
 import com.cq.video.repository.IVideoInfoRepository;
 import com.cq.video.entity.VideoInfo;
 import com.cq.video.utils.FileCodecsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -66,4 +69,14 @@ public class UploadFileController {
             return "转码失败";
         }
     }
+
+    @RequestMapping(value = "/list",method = RequestMethod.GET)
+    public RespListSuccess fileList(@RequestParam(value = "offset",defaultValue = "0") int offset,@RequestParam(value = "limit",defaultValue = "10") int limit){
+        RespListSuccess resplist = new RespListSuccess();
+        Page<VideoInfo> videoInfos = videoInfoRepository.findAll(PageRequest.of(offset,limit));
+        resplist.setItems(videoInfos.getContent());
+        resplist.setTotal((int)videoInfos.getTotalElements());
+        return resplist;
+    }
+
 }
