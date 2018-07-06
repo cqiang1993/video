@@ -1,5 +1,6 @@
 server:
   port: 8000
+  address: 192.168.240.13
 
 spring:
   datasource:
@@ -22,3 +23,8 @@ spring:
     multipart:
       max-file-size: 500MB
       max-request-size: 500MB
+  data:
+    mongodb:
+      host: 192.168.240.192
+      port: 30000
+      database: Content

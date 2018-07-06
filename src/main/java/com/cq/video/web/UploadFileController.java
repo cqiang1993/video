@@ -1,82 +1,76 @@
 package com.cq.video.web;
 
-import com.cq.video.entity.RespData.RespListSuccess;
-import com.cq.video.repository.IVideoInfoRepository;
-import com.cq.video.entity.VideoInfo;
-import com.cq.video.utils.FileCodecsUtil;
+import com.cq.video.entity.FileInfo;
+import com.cq.video.repository.FileInfoRepository;
+import com.cq.video.utils.MD5Util;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/file")
 public class UploadFileController {
 
+    @Value("${server.address}")
+    private String serverAddress;
+
+    @Value("${server.port}")
+    private String serverPort;
+
+
     @Autowired
-    IVideoInfoRepository videoInfoRepository;
+    FileInfoRepository fileInfoRepository;
 
-    @RequestMapping(value = "/upload",method = RequestMethod.POST)
+    @RequestMapping(value = "/{serverName}/upload",method = RequestMethod.POST)
     @ResponseBody
-    public String upload(@RequestParam("file")MultipartFile file,@RequestParam("title") String title,
-                         @RequestParam("descript") String descript){
+    public ResponseEntity<String> upload(@RequestParam("file")MultipartFile file, @PathVariable("serverName") String serverName,
+                                 @RequestParam(value = "autoDelete",defaultValue = "true") String autoDelete){
+        FileInfo fileInfo= null;
         if(file.isEmpty()){
-            return "false";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("传入文件不能为空");
         }
-        boolean flag = false;    //转码成功与否的标记
-        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-        VideoInfo videoInfo = new VideoInfo();
-        String filename = file.getOriginalFilename();
-        String[] fileSub = filename.split(".");
-        for(String sub : fileSub)
-            System.out.println(sub);
-        System.out.println(filename);
-        String basePath = "videos/";
-        String filePath = basePath+"temp/"+filename;
-        File saveFile = new File(filePath);
-        if (!saveFile.getParentFile().exists()) {
-            saveFile.getParentFile().mkdirs();
+        if (serverName == null || serverName.equals("")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serverName不能为空");
         }
-        try{
-            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(saveFile));
-            out.write(file.getBytes());
-            out.flush();
-            out.close();
-            UUID uuid = UUID.randomUUID();
-            String ffmpegPath = "D:/ffmpeg/bin/ffmpeg.exe";
-            String codcFilePath = basePath + uuid+".flv";
-            System.out.println(codcFilePath);
-            String picturePath = basePath + "pictures/"+uuid+".jpg";
-            videoInfo.setTitle(title);
-            videoInfo.setDescript(descript);
-            videoInfo.setSrc(codcFilePath);
-            videoInfo.setPicture(picturePath);
-            videoInfo.setUpdateTime(sdf.format(new Date()));
-            flag = FileCodecsUtil.executeCodecs(ffmpegPath,filePath,codcFilePath,picturePath);
-            videoInfoRepository.insertVideoInfo(videoInfo.getTitle(),videoInfo.getSrc(),videoInfo.getPicture(),videoInfo.getDescript(),videoInfo.getUpdateTime());
-        }catch (IOException e) {
+        try {
+            String filename = file.getOriginalFilename();
+            String caselsh = filename.substring(0,filename.lastIndexOf("."));
+            String suffix  = filename.substring(filename.lastIndexOf(".")+1);
+            FileInfo fi = new FileInfo(caselsh,file.getContentType(),file.getSize(),file.getBytes(),serverName,suffix);
+            fi.setAutoDelete(autoDelete);
+            fi.setSessionId(UUID.randomUUID().toString());
+            fi.setMd5(MD5Util.getMD5(file.getInputStream()));
+            fileInfo= fileInfoRepository.save(fi);
+            String path = "http://"+serverAddress+":"+serverPort+"/file/"+serverName+"/"+fileInfo.getId();
+            return ResponseEntity.status(HttpStatus.OK).body(path);
+        } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
-        }
-        if(flag){
-            return "上传成功";
-        }else {
-            return "转码失败";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
-    @RequestMapping(value = "/list",method = RequestMethod.GET)
-    public RespListSuccess fileList(@RequestParam(value = "offset",defaultValue = "0") int offset,@RequestParam(value = "limit",defaultValue = "10") int limit){
-        RespListSuccess resplist = new RespListSuccess();
-        Page<VideoInfo> videoInfos = videoInfoRepository.findAll(PageRequest.of(offset,limit));
-        resplist.setItems(videoInfos.getContent());
-        resplist.setTotal((int)videoInfos.getTotalElements());
-        return resplist;
+    @RequestMapping("/{serverName}/{id}")
+    public ResponseEntity<Object> viewFile(@PathVariable String id, @PathVariable String serverName){
+        Optional<FileInfo> file = fileInfoRepository.findByIdAndServerName(id,serverName);
+        if(file.isPresent()){
+            return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "fileName=\"" + file.get().getName() + "\"")
+                    .header(HttpHeaders.CONTENT_TYPE, file.get().getContentType())
+                    .header(HttpHeaders.CONTENT_LENGTH, file.get().getSize() + "").header("Connection", "close")
+                    .body(file.get().getContent());
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File was not fount");
+        }
     }
-
 }
