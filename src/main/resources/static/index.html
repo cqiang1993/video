@@ -5,32 +5,22 @@
     <title>Title</title>
 </head>
 <body>
-<form enctype="multipart/form-data" method="post" action="/video/upload">
+<form enctype="multipart/form-data" method="post" action="/file/dbServer/upload">
     <table border="1">
         <thead>
         <tr></tr>
         </thead>
         <tbody>
         <tr>
-            <td>选择视频:</td>
-            <td><input type="file" name="file" id="file" accept="video/*,audio/*"/></td>
-        </tr>
-        <tr>
-            <td>视频标题:</td>
-            <td><input type="text" name="title" id="title" /></td>
-        </tr>
-        <tr>
-            <td>视频介绍:</td>
-            <td>
-                <textarea name="descript" id="descript"></textarea>
-            </td>
+            <td>选择文件:</td>
+            <td><input type="file" name="file" id="file"/></td>
         </tr>
         </tbody>
         <tfoot>
         <tr>
             <td></td>
             <td>
-                <input type="submit" value="上传视频"/>
+                <input type="submit" value="上传文件"/>
                 <input type="reset" value="重新选择"/>
             </td>
         </tr>
