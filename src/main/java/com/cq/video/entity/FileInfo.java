@@ -12,57 +12,31 @@ public class FileInfo {
     private String id;
     private String name;
     private String contentType;
-    private long size;
-    private Date uploadDate;
-    private String md5;
-    private byte[] content;
     private String path;
     private String serverName;
     private String sessionId;
     private String autoDelete;
-    private byte[] pictures;
     private String type;
+
+
+    private String picturesId;
 
     public FileInfo(){}
 
-    public FileInfo(String name,String contentType,long size,byte[] content,String serverName,String type){
+    public FileInfo(String name,String contentType,String serverName,String type){
         this.name = name;
         this.contentType = contentType;
-        this.size = size;
-        this.uploadDate = new Date();
-        this.content = content;
         this.serverName = serverName;
         this.type = type;
     }
 
-    public FileInfo(String name,String contentType,long size,byte[] content,String serverName,byte[] pictures,String type){
+    public FileInfo(String name,String contentType,String serverName,String picturesId,String type){
         this.name = name;
         this.contentType = contentType;
-        this.size = size;
-        this.uploadDate = new Date();
-        this.content = content;
         this.serverName = serverName;
-        this.pictures = pictures;
+        this.picturesId = picturesId;
+        this.type = type;
     }
-
-    @Override
-    public boolean equals(Object object){
-        if (this == object) {
-            return true;
-        }
-        if (object == null || getClass() != object.getClass()) {
-            return false;
-        }
-        FileInfo fileInfo = (FileInfo) object;
-        return java.util.Objects.equals(size, fileInfo.size)
-                && java.util.Objects.equals(name, fileInfo.name)
-                && java.util.Objects.equals(contentType, fileInfo.contentType)
-                && java.util.Objects.equals(uploadDate, fileInfo.uploadDate)
-                && java.util.Objects.equals(md5, fileInfo.md5)
-                && java.util.Objects.equals(id, fileInfo.id);
-    }
-
-
 
 
     public String getId() {
@@ -89,37 +63,6 @@ public class FileInfo {
         this.contentType = contentType;
     }
 
-    public long getSize() {
-        return size;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    public Date getUploadDate() {
-        return uploadDate;
-    }
-
-    public void setUploadDate(Date uploadDate) {
-        this.uploadDate = uploadDate;
-    }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public void setMd5(String md5) {
-        this.md5 = md5;
-    }
-
-    public byte[] getContent() {
-        return content;
-    }
-
-    public void setContent(byte[] content) {
-        this.content = content;
-    }
 
     public String getPath() {
         return path;
@@ -152,12 +95,12 @@ public class FileInfo {
         this.sessionId = sessionId;
     }
 
-    public byte[] getPictures() {
-        return pictures;
+    public String getPicturesId() {
+        return picturesId;
     }
 
-    public void setPictures(byte[] pictures) {
-        this.pictures = pictures;
+    public void setPicturesId(String picturesId) {
+        this.picturesId = picturesId;
     }
 
     public String getType() {

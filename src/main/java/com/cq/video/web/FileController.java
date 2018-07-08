@@ -2,10 +2,16 @@ package com.cq.video.web;
 
 import com.cq.video.entity.FileInfo;
 import com.cq.video.repository.FileInfoRepository;
-import com.cq.video.utils.MD5Util;
+import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.gridfs.GridFS;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsOperations;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,13 +19,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/file")
-public class UploadFileController {
+public class FileController {
 
     @Value("${server.address}")
     private String serverAddress;
@@ -27,6 +31,11 @@ public class UploadFileController {
     @Value("${server.port}")
     private String serverPort;
 
+    @Autowired
+    GridFsOperations gridFsOperations;
+
+    @Autowired
+    GridFsTemplate gridFsTemplate;
 
     @Autowired
     FileInfoRepository fileInfoRepository;
@@ -46,14 +55,14 @@ public class UploadFileController {
             String filename = file.getOriginalFilename();
             String caselsh = filename.substring(0,filename.lastIndexOf("."));
             String suffix  = filename.substring(filename.lastIndexOf(".")+1);
-            FileInfo fi = new FileInfo(caselsh,file.getContentType(),file.getSize(),file.getBytes(),serverName,suffix);
-            fi.setAutoDelete(autoDelete);
+            FileInfo fi = new FileInfo(caselsh,file.getContentType(),serverName,suffix);
+            String sessionName = UUID.randomUUID().toString();
+            fi.setAutoDelete(sessionName);
             fi.setSessionId(UUID.randomUUID().toString());
-            fi.setMd5(MD5Util.getMD5(file.getInputStream()));
-            fileInfo= fileInfoRepository.save(fi);
-            String path = "http://"+serverAddress+":"+serverPort+"/file/"+serverName+"/"+fileInfo.getId();
+            ObjectId objectId = gridFsOperations.store(file.getInputStream(),sessionName,fi);
+            String path = "http://"+serverAddress+":"+serverPort+"/file/"+serverName+"/"+objectId;
             return ResponseEntity.status(HttpStatus.OK).body(path);
-        } catch (IOException | NoSuchAlgorithmException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -61,16 +70,18 @@ public class UploadFileController {
 
     @RequestMapping("/{serverName}/{id}")
     public ResponseEntity<Object> viewFile(@PathVariable String id, @PathVariable String serverName){
-        Optional<FileInfo> file = fileInfoRepository.findByIdAndServerName(id,serverName);
-        if(file.isPresent()){
-            return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "fileName=\"" + file.get().getName() + "\"")
-                    .header(HttpHeaders.CONTENT_TYPE, file.get().getContentType())
-                    .header(HttpHeaders.CONTENT_LENGTH, file.get().getSize() + "").header("Connection", "close")
-                    .body(file.get().getContent());
+        try {
+            GridFSFile gridFSFile = gridFsTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(id).and("metadata.serverName").is(serverName)));
+            GridFsResource gridFsResource = gridFsTemplate.getResource(gridFSFile.getFilename());
+            return ResponseEntity.status(HttpStatus.OK)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "fileName=\"" + gridFSFile.getFilename() + "\"")
+                    .header(HttpHeaders.CONTENT_TYPE, gridFSFile.getMetadata().get("contentType").toString())
+                    .header(HttpHeaders.CONTENT_LENGTH, gridFSFile.getLength() + "").header("Connection", "close")
+                    .body(gridFsResource);
+        }catch (NullPointerException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("文件不存在");
         }
-        else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File was not fount");
-        }
+
     }
+
 }
