@@ -4,38 +4,66 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
 import java.util.Date;
-import java.util.UUID;
 
 @Document
 public class FileInfo {
     @Id
-    private String id;
-    private String name;
-    private String contentType;
-    private String path;
-    private String serverName;
-    private String sessionId;
-    private String autoDelete;
-    private String type;
-
-
+    private String id;//文件ObjectId
+    private String name;//文件名称
+    private String serverName;//服务名称(保留字段，用于后续服务化扩展)
+    private String sessionId;//唯一标识
+    private String autoDelete;//是否自动删除
+    private String type;//文件基础类型
+    private String contentType;//网络文件类型
     private String picturesId;
+
+
+    private Date uplodaDate;
+    private String md5;
+    private long length;
+
+
 
     public FileInfo(){}
 
     public FileInfo(String name,String contentType,String serverName,String type){
         this.name = name;
-        this.contentType = contentType;
         this.serverName = serverName;
         this.type = type;
+        this.contentType = contentType;
     }
 
     public FileInfo(String name,String contentType,String serverName,String picturesId,String type){
         this.name = name;
-        this.contentType = contentType;
         this.serverName = serverName;
         this.picturesId = picturesId;
         this.type = type;
+        this.contentType = contentType;
+    }
+
+
+    public Date getUplodaDate() {
+        return uplodaDate;
+    }
+
+    public void setUplodaDate(Date uplodaDate) {
+        this.uplodaDate = uplodaDate;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
+    public long getLength() {
+        return length;
+    }
+
+    public void setLength(long length) {
+        this.length = length;
     }
 
 
@@ -47,13 +75,6 @@ public class FileInfo {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getContentType() {
         return contentType;
@@ -63,13 +84,12 @@ public class FileInfo {
         this.contentType = contentType;
     }
 
-
-    public String getPath() {
-        return path;
+    public String getName() {
+        return name;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getServerName() {

@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: dev
+    active: debug
 
 ---
 server:
@@ -32,3 +32,35 @@ spring:
   data:
     mongodb:
       uri: mongodb://192.168.0.100:30000/Content
+
+---
+
+server:
+  port: 8000
+  address: 192.168.240.13
+
+spring:
+  profiles: debug
+  datasource:
+    url: jdbc:mysql://192.168.240.192:6000/test_video_db?Reconnect=true
+    username: root
+    password: 123
+    tomcat:
+      initial-size: 0
+      max-active: 80
+      min-idle: 1
+      max-idle: 80
+      max-wait: 50000
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+  data:
+    mongodb:
+      uri: mongodb://192.168.240.192:30000/Content

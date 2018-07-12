@@ -16,5 +16,4 @@ public interface FileInfoRepository extends MongoRepository<FileInfo,String> {
 
     void deleteById(String id);
 
-    Optional<FileInfo> findByIdAndServerName(String id, String serverName);
 }
